@@ -101,8 +101,32 @@ static SplitTuple *split(Node *n) {
     return st;
 }
 
-static void insert_non_full(Node *n, const void *key, int(*cmpfunc)(const void *, const void *)) {
+static void insert_non_full(Node *n, void *key, int(*cmpfunc)(const void *, const void *)) {
+    // find the index where `key` needs to be inserted
     KeyIndex *kx = find_index(n->data, key, cmpfunc);
+    // if we successfully find a key that matches the `key` passed in, then we reject it because trees should not allow
+    // duplicates
+    if (kx_key(kx)) {
+        printf("duplicate keys not allowed!\n");
+        return;
+    }
+    // if the node is a leaf, just straight insert it into the node
+    if (n->leaf) put_index(n->data, key, kx_index(kx));
+    else {
+        // if the node isn't a leaf, we need to find the subtree where `key` could possibly be
+        Node *target = (Node *) get_index(n->children, kx_index(kx));
+        // if it's full, rip it in half and reset the local child pointers that are affected
+        if (full(target)) {
+            SplitTuple *st = split(target);
+            put_index(n->data, st->promoted_key, kx_index(kx));
+            set_index(n->children, st->first, kx_index(kx));
+            put_index(n->children, st->second, kx_index(kx) + 1);
+            // recurse with node initially passed in
+            return insert_non_full(n, key, cmpfunc);
+        }
+        // recurse with target
+        insert_non_full(target, key, cmpfunc);
+    }
 }
 
 void insert(Tree *tree, const void *key, int(*cmpfunc)(const void *, const void *)) {
@@ -133,4 +157,11 @@ void insert(Tree *tree, const void *key, int(*cmpfunc)(const void *, const void 
         return insert_non_full(new_root, key, cmpfunc);
     }
     insert_non_full(root, key, cmpfunc);
+}
+
+Tree *make_tree(void *keys, uint32_t num_keys, uint32_t min_order, size_t key_size,
+                int(*cmpfunc)(const void *, const void *)) {
+    Tree *tree = tree(min_order);
+    for (int i = 0; i < num_keys; i++) insert(tree, keys + i * key_size, cmpfunc);
+    return tree;
 }
