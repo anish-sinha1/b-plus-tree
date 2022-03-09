@@ -129,7 +129,7 @@ static void insert_non_full(Node *n, void *key, int(*cmpfunc)(const void *, cons
     }
 }
 
-void insert(Tree *tree, const void *key, int(*cmpfunc)(const void *, const void *)) {
+void insert(Tree *tree, void *key, int(*cmpfunc)(const void *, const void *)) {
     // current root
     Node *root = tree->root;
     if (full(root)) {
