@@ -161,7 +161,7 @@ void insert(Tree *tree, const void *key, int(*cmpfunc)(const void *, const void 
 
 Tree *make_tree(void *keys, uint32_t num_keys, uint32_t min_order, size_t key_size,
                 int(*cmpfunc)(const void *, const void *)) {
-    Tree *tree = tree(min_order);
-    for (int i = 0; i < num_keys; i++) insert(tree, keys + i * key_size, cmpfunc);
-    return tree;
+    Tree *t = tree(min_order);
+    for (int i = 0; i < num_keys; i++) insert(t, keys + i * key_size, cmpfunc);
+    return t;
 }
